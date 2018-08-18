@@ -1,0 +1,33 @@
+#include <cstdio>
+#include <string>
+#include <stdexcept>
+#include <openssl/sha.h>
+#include "config.h"
+
+#include "sha256.h"
+
+const int buffsize = 32768;
+
+std::string sha256_file(const std::string &path) {
+    FILE *file = fopen(path.c_str(), "rb");
+    if (!file) {
+        verbose_print("Unable to open file: %s, errno: %d\n", path.c_str(), errno);
+        return "";
+    }
+    SHA256_CTX sha256_ctx{};
+    SHA256_Init(&sha256_ctx);
+    unsigned char buffer[buffsize];
+    while (fread(buffer, 1, buffsize, file)) {
+        SHA256_Update(&sha256_ctx, buffer, buffsize);
+    }
+    fclose(file);
+    unsigned char hash[SHA256_DIGEST_LENGTH];
+    SHA256_Final(hash, &sha256_ctx);
+    char hex[65];
+    for (int i = 0; i < SHA256_DIGEST_LENGTH; i++) {
+        sprintf(hex + (i * 2), "%02x", hash[i]);
+    }
+    hex[64] = 0;
+    verbose_print("Generated hash for %s : %s\n", path.c_str(), hex);
+    return std::string(hex);
+}
