@@ -3,6 +3,9 @@
 
 #include <string>
 #include <vector>
+#include "proto/filesystem.pb.h"
+
+bool stat_to_proto_changed(struct stat *st, filesystem::Stat *proto);
 
 int scan_filesystem(std::vector<std::string> included_dirs, const std::string &save_file);
 

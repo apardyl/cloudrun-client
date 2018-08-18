@@ -15,7 +15,7 @@ using namespace filesystem;
 static void check_paths(std::vector<std::string> &included_dirs) {
     for (std::string &path_to_scan : included_dirs) {
         assert(!path_to_scan.empty());
-        if(path_to_scan[0] != '/') {
+        if (path_to_scan[0] != '/') {
             printf("ERROR: %s not an absolute path! Unable to scan.\n", path_to_scan.c_str());
             exit(1);
         }
@@ -43,24 +43,28 @@ static Filesystem load_or_create_fs(const std::string &save_file) {
     }
 }
 
+bool stat_to_proto_changed(struct stat *st, Stat *proto) {
+    proto->set_mode(st->st_mode);
+    proto->set_uid(st->st_uid);
+    proto->set_gid(st->st_gid);
+    proto->set_size(static_cast<google::protobuf::uint64>(st->st_size));
+    proto->set_blockcnt(static_cast<google::protobuf::uint64>(st->st_blocks));
+    proto->set_ctime_ns(static_cast<google::protobuf::uint64>(st->st_ctim.tv_nsec + st->st_ctim.tv_sec * 1000000000));
+    if (proto->mtime_ns() != st->st_mtim.tv_nsec + st->st_mtim.tv_sec * 1000000000) {
+        proto->set_mtime_ns(static_cast<google::protobuf::uint64>(st->st_mtim.tv_nsec + st->st_mtim.tv_sec * 1000000000));
+        return true;
+    }
+    return false;
+}
+
 static bool set_stat_and_check_if_modified(Node *v, const std::string &path) {
     struct stat st{};
     if (lstat(path.c_str(), &st) == -1) {
         debug_print("Unable to stat %s\n", path.c_str());
+        return false;
     } else {
-        Stat *s = v->mutable_stat();
-        s->set_mode(st.st_mode);
-        s->set_uid(st.st_uid);
-        s->set_gid(st.st_gid);
-        s->set_size(static_cast<google::protobuf::uint64>(st.st_size));
-        s->set_blockcnt(static_cast<google::protobuf::uint64>(st.st_blocks));
-        s->set_ctime_ns(static_cast<google::protobuf::uint64>(st.st_ctim.tv_nsec + st.st_ctim.tv_sec * 1000000000));
-        if (s->mtime_ns() != st.st_mtim.tv_nsec + st.st_mtim.tv_sec * 1000000000) {
-            s->set_mtime_ns(static_cast<google::protobuf::uint64>(st.st_mtim.tv_nsec + st.st_mtim.tv_sec * 1000000000));
-            return true;
-        }
+        return stat_to_proto_changed(&st, v->mutable_stat());
     }
-    return false;
 }
 
 static std::string read_link(const std::string &path) {

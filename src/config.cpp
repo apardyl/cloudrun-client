@@ -1,3 +1,3 @@
 #include "config.h"
 
-bool verbose = true;
+bool verbose = VERBOSE;

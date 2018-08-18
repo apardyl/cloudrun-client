@@ -18,7 +18,7 @@ int main(int argc, char **argv) {
         }
     }
     if (argc == 3 && strcmp(argv[1], "serve") == 0) {
-        RemoteFSServer().runServer(std::string(argv[2]));
+        RemoteFSServer().run_server(std::string(argv[2]));
     }
     return 0;
 }

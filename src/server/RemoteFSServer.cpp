@@ -14,7 +14,7 @@ using grpc::ServerReaderWriter;
 using grpc::ServerWriter;
 using grpc::Status;
 
-void RemoteFSServer::runServer(const std::string &listen_on) {
+void RemoteFSServer::run_server(const std::string &listen_on) {
     RemoteFSService service;
     ServerBuilder builder;
     builder.AddListeningPort(listen_on, grpc::InsecureServerCredentials());

@@ -7,7 +7,7 @@
 
 class RemoteFSServer {
 public:
-    void runServer(const std::string &listen_on);
+    void run_server(const std::string &listen_on);
 };
 
 
