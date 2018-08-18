@@ -94,7 +94,7 @@ static Node *find_or_create_base(Node *root, const std::string &base_path) {
                     verbose_print("WARNING: %s is a symlink, omitting subtree\n", path.c_str());
                     return nullptr;
                 } else if (S_ISREG(u->stat().mode())) {
-                    u->set_target(sha256_file(path));
+                    sha256_file(path, u->mutable_target());
                     verbose_print("WARNING: %s is a file, omitting subtree\n", path.c_str());
                     return nullptr;
                 }
@@ -120,7 +120,7 @@ static void scan_dfs(Node *v, const std::string &path) {
             v->set_target(read_link(path));
             verbose_print("Updated link %s\n", path.c_str());
         } else if (S_ISREG(v->stat().mode())) {
-            v->set_target(sha256_file(path));
+            sha256_file(path, v->mutable_target());
             verbose_print("Updated file %s\n", path.c_str());
         }
     }

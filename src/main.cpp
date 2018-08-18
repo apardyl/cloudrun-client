@@ -1,6 +1,7 @@
 #include <cstring>
 #include <vector>
 #include <string>
+#include <server/RemoteFSServer.h>
 
 #include "scanfs/scanfs.h"
 
@@ -15,6 +16,9 @@ int main(int argc, char **argv) {
             }
             scan_filesystem(paths_to_scan, string(argv[2]));
         }
+    }
+    if (argc == 3 && strcmp(argv[1], "serve") == 0) {
+        RemoteFSServer().runServer(std::string(argv[2]));
     }
     return 0;
 }

@@ -3,6 +3,6 @@
 
 #include <string>
 
-std::string sha256_file(const std::string& path);
+int sha256_file(const std::string& path, std::string* checksum);
 
 #endif //CLOUDRUN_HASHFS_UTILS_SHA256_H

@@ -8,11 +8,11 @@
 
 const int buffsize = 32768;
 
-std::string sha256_file(const std::string &path) {
+int sha256_file(const std::string& path, std::string* checksum) {
     FILE *file = fopen(path.c_str(), "rb");
     if (!file) {
         verbose_print("Unable to open file: %s, errno: %d\n", path.c_str(), errno);
-        return "";
+        return errno;
     }
     SHA256_CTX sha256_ctx{};
     SHA256_Init(&sha256_ctx);
@@ -29,5 +29,6 @@ std::string sha256_file(const std::string &path) {
     }
     hex[64] = 0;
     verbose_print("Generated hash for %s : %s\n", path.c_str(), hex);
-    return std::string(hex);
+    *checksum = hex;
+    return 0;
 }
