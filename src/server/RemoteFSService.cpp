@@ -46,7 +46,11 @@ grpc::Status RemoteFSService::GetData(::grpc::ServerContext *context, const ::re
         }
         DataChunkResponse response;
         response.set_data(buf, static_cast<size_t>(res));
-        writer->Write(response);
+        if(!writer->Write(response)) {
+            debug_print("Broken stream for %s\n", request->path().c_str());
+            close(fd);
+            return Status::CANCELLED;
+        }
     }
     close(fd);
     return Status::OK;
