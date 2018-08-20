@@ -6,6 +6,9 @@
 class RemoteFSService : public remotefs::RemoteFS::Service {
     grpc::Status errno_to_status(int code);
 public:
+    grpc::Status GetLink(::grpc::ServerContext *context, const ::remotefs::FileRequest *request,
+                         ::remotefs::LinkResponse *response) override;
+
     grpc::Status GetChecksum(::grpc::ServerContext *context, const ::remotefs::FileRequest *request,
                              ::remotefs::ChecksumResponse *response) override;
 

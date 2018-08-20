@@ -67,7 +67,7 @@ static bool set_stat_and_check_if_modified(Node *v, const std::string &path) {
     }
 }
 
-static std::string read_link(const std::string &path) {
+std::string read_link(const std::string &path) {
     char buff[PATH_MAX + 1];
     ssize_t res = readlink(path.c_str(), buff, PATH_MAX);
     if (res == -1) {

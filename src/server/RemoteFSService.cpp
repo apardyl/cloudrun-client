@@ -20,6 +20,13 @@ grpc::Status RemoteFSService::GetChecksum(::grpc::ServerContext *context, const 
     return errno_to_status(res);
 }
 
+Status RemoteFSService::GetLink(::grpc::ServerContext *context, const ::remotefs::FileRequest *request,
+                                ::remotefs::LinkResponse *response) {
+    debug_print("GetLink: %s\n", request->path().c_str());
+    response->set_target(read_link(request->path()));
+    return response->target().empty() ? errno_to_status(errno) : Status::OK;
+}
+
 grpc::Status RemoteFSService::GetStat(::grpc::ServerContext *context, const ::remotefs::FileRequest *request,
                                       ::filesystem::Stat *response) {
     debug_print("GetStat: %s\n", request->path().c_str());
@@ -33,6 +40,7 @@ grpc::Status RemoteFSService::GetStat(::grpc::ServerContext *context, const ::re
 
 grpc::Status RemoteFSService::GetData(::grpc::ServerContext *context, const ::remotefs::FileRequest *request,
                                       ::grpc::ServerWriter<::remotefs::DataChunkResponse> *writer) {
+    debug_print("GetData %s\n", request->path().c_str());
     int fd = open(request->path().c_str(), O_RDONLY);
     if (fd == -1) {
         return errno_to_status(fd);
@@ -46,7 +54,7 @@ grpc::Status RemoteFSService::GetData(::grpc::ServerContext *context, const ::re
         }
         DataChunkResponse response;
         response.set_data(buf, static_cast<size_t>(res));
-        if(!writer->Write(response)) {
+        if (!writer->Write(response)) {
             debug_print("Broken stream for %s\n", request->path().c_str());
             close(fd);
             return Status::CANCELLED;
@@ -58,6 +66,7 @@ grpc::Status RemoteFSService::GetData(::grpc::ServerContext *context, const ::re
 
 grpc::Status RemoteFSService::ListDirectory(::grpc::ServerContext *context, const ::remotefs::FileRequest *request,
                                             ::remotefs::FileListResponse *response) {
+    debug_print("ListDirectory: %s\n", request->path().c_str());
     DIR *dir = opendir(request->path().c_str());
     if (dir == nullptr) {
         return errno_to_status(errno);
@@ -69,7 +78,14 @@ grpc::Status RemoteFSService::ListDirectory(::grpc::ServerContext *context, cons
         }
         FileListResponse::DirEntity *entity = response->add_item();
         entity->set_name(d->d_name);
-        entity->set_type(d->d_type);
+        struct stat st{};
+        std::string p = request->path() + "/" + d->d_name;
+        if (lstat(p.c_str(), &st) == 0) {
+            stat_to_proto_changed(&st, entity->mutable_stat());
+            if (S_ISLNK(st.st_mode)) {
+                entity->set_taget(read_link(p));
+            }
+        }
     }
     closedir(dir);
     return Status::OK;
