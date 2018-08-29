@@ -28,7 +28,7 @@ int sha256_file(const std::string& path, std::string* checksum) {
         sprintf(hex + (i * 2), "%02x", hash[i]);
     }
     hex[64] = 0;
-    verbose_print("Generated hash for %s : %s\n", path.c_str(), hex);
+    debug_print("Generated hash for %s : %s\n", path.c_str(), hex);
     *checksum = hex;
     return 0;
 }

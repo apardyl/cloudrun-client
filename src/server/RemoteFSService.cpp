@@ -83,7 +83,7 @@ grpc::Status RemoteFSService::ListDirectory(::grpc::ServerContext *context, cons
         if (lstat(p.c_str(), &st) == 0) {
             stat_to_proto_changed(&st, entity->mutable_stat());
             if (S_ISLNK(st.st_mode)) {
-                entity->set_taget(read_link(p));
+                entity->set_target(read_link(p));
             }
         }
     }
