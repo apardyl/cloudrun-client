@@ -51,7 +51,8 @@ bool stat_to_proto_changed(struct stat *st, Stat *proto) {
     proto->set_blockcnt(static_cast<google::protobuf::uint64>(st->st_blocks));
     proto->set_ctime_ns(static_cast<google::protobuf::uint64>(st->st_ctim.tv_nsec + st->st_ctim.tv_sec * 1000000000));
     if (proto->mtime_ns() != st->st_mtim.tv_nsec + st->st_mtim.tv_sec * 1000000000) {
-        proto->set_mtime_ns(static_cast<google::protobuf::uint64>(st->st_mtim.tv_nsec + st->st_mtim.tv_sec * 1000000000));
+        proto->set_mtime_ns(
+                static_cast<google::protobuf::uint64>(st->st_mtim.tv_nsec + st->st_mtim.tv_sec * 1000000000));
         return true;
     }
     return false;
@@ -103,6 +104,7 @@ static Node *find_or_create_base(Node *root, const std::string &base_path) {
                     return nullptr;
                 }
                 root = u;
+                root->set_partial(true);
                 debug_print("Scanned %s\n", path.c_str());
             } else {
                 debug_print("Unable to create/update directory %s\n", path.c_str());
@@ -178,6 +180,7 @@ int scan_filesystem(std::vector<std::string> included_dirs, const std::string &s
     if (!fs.has_root()) {
         fs.set_allocated_root(new Node());
     }
+    fs.mutable_root()->set_partial(true);
 
     for (auto &path : included_dirs) {
         verbose_print("Scanning %s\n", path.c_str());
