@@ -14,11 +14,15 @@ int main(int argc, char **argv) {
             for (int i = 3; i < argc; i++) {
                 paths_to_scan.emplace_back(argv[i]);
             }
-            scan_filesystem(paths_to_scan, string(argv[2]));
+            return scan_filesystem(paths_to_scan, string(argv[2]));
         }
     }
     if (argc == 3 && strcmp(argv[1], "serve") == 0) {
         RemoteFSServer().run_server(std::string(argv[2]));
+        return 1;
     }
-    return 0;
+    printf("Usage:\n");
+    printf("Run server: cloudrun-client serve <IP>:<PORT>\n");
+    printf("Scan filesystem: cloudrun-client scan <save file name> <list of  directories to scan>\n");
+    return 1;
 }

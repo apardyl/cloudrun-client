@@ -26,8 +26,8 @@ PROTOHEAD := $(PROTOSOURCES:$(srcdir)/%.proto=$(gendir)/%.pb.h)
 PROTOOBJS := $(PROTOSOURCES:$(srcdir)/%.proto=$(builddir)/%.pb.o) $(PROTOSOURCES:$(srcdir)/%.proto=$(builddir)/%.grpc.pb.o)
 PROTOCFILES := $(PROTOSOURCES:$(srcdir)/%.proto=$(gendir)/%.pb.cc)
 
-TARGET := $(outdir)/cloudrun-client
-INSTALLTARGET := /usr/local/bin/cloudrun-client
+TARGET := $(outdir)/cloudrun-client-daemon
+INSTALLTARGET := /usr/local/bin/cloudrun-client-daemon
  
 all: $(TARGET)
 
