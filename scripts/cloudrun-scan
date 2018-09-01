@@ -1,0 +1,5 @@
+#!/bin/bash
+
+source /etc/cloudrun/client.conf
+
+cloudrun-client-daemon scan "$FS_META_FILE" $SHARED_STORE_DIRS

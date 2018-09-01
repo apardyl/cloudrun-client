@@ -1,0 +1,61 @@
+#!/bin/bash
+
+source /etc/cloudrun/client.conf
+
+# TODO: handle errors
+set -e
+
+function background () {
+    source /etc/cloudrun/client.conf
+    set -e
+    echo "$$" > "$PID_FILE"
+
+    echo "Starting daemon" >> "$LOG_FILE"
+    cloudrun-client-daemon serve 0.0.0.0:30000 >> "$LOG_FILE" 2>&1 &
+
+    echo "Connecting..." >> "$LOG_FILE"
+
+    cat "$CONTROL_FIFO" | ssh root@"$1" -R 30000:127.0.0.1:30000 -x cloudrun-worker >> "$LOG_FILE" 2>&1
+    echo "Session closed" >> "$LOG_FILE"
+    rm -f "$PID_FILE"
+    rm -f "$CONTROL_FIFO"
+}
+
+export -f background
+
+if [ $# -ne 1 ]; then
+    echo "Usage: cloudrun-connect <node-address>"
+    exit 1
+fi
+
+if [ -f "$PID_FILE" ]; then
+    if [ -e /proc/"$(< ${PID_FILE})" ]; then
+        echo "Close existing session first"
+        exit 1
+    fi
+fi
+
+rm -f "$PID_FILE"
+rm -f "$CONTROL_FIFO"
+rm -f "$LOG_FILE"
+
+if [ ! -f "$FS_META_FILE" ]; then
+    cloudrun-scan
+fi
+
+echo "Syncing metadata"
+
+# Upload meta file
+rsync -auz  "$FS_META_FILE" root@"$1":/root/filesystem.meta
+
+mkfifo "$CONTROL_FIFO"
+echo "Starting session" > "$LOG_FILE"
+echo "Starting session"
+
+nohup bash -c "background $1" </dev/null >/dev/null 2>&1 &
+
+tail -f "$LOG_FILE" | while read LINE; do
+    if grep "\(ERROR:\|Worker started\)" <<< "$LINE"; then
+        exit
+     fi
+done

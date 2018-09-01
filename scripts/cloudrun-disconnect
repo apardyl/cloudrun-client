@@ -1,0 +1,12 @@
+#!/bin/bash
+
+source /etc/cloudrun/client.conf
+
+if [ -f "$PID_FILE" -a -e /proc/"$(< ${PID_FILE})" ]; then
+    echo q > "$CONTROL_FIFO"
+    inotifywait -qq -t 10 -e delete_self "$PID_FILE" || kill "$(< ${PID_FILE})"
+    exit 0
+fi
+
+echo "No active session"
+exit 1

@@ -4,6 +4,12 @@ gendir := gen
 builddir := build
 outdir := bin
 
+confdir := configs
+scriptdir := scripts
+
+confinstalldir := /etc/cloudrun
+scriptinstalldir := /usr/local/bin
+
 CC ?= gcc
 CXX ?= g++
 PROTOC ?= protoc
@@ -28,7 +34,12 @@ PROTOCFILES := $(PROTOSOURCES:$(srcdir)/%.proto=$(gendir)/%.pb.cc)
 
 TARGET := $(outdir)/cloudrun-client-daemon
 INSTALLTARGET := /usr/local/bin/cloudrun-client-daemon
- 
+
+CONFSOURCES := $(shell find $(confdir) -type f)
+CONFINSTALLTARGETS := $(CONFSOURCES:$(confdir)/%=$(confinstalldir)/%)
+SCRIPTSOURCES := $(shell find $(scriptdir) -type f)
+SCRIPTNSTALLTARGETS :=  $(SCRIPTSOURCES:$(scriptdir)/%=$(scriptinstalldir)/%)
+
 all: $(TARGET)
 
 generated: $(PROTOHEAD)
@@ -75,18 +86,31 @@ clean:
 	rm -rf $(gendir)
 	rm -rf $(builddir)
 	rm -rf $(outdir)
-install:
+
+$(INSTALLTARGET): $(TARGET)
+	@echo Installing $<
 	cp $(TARGET) $(INSTALLTARGET)
 
-uninstall:
-	rm $(INSTALLTARGET)
+$(confinstalldir)/%: $(confdir)/%
+	@echo Installing $<
+	@mkdir -p "$(@D)"
+	cp $< $@
 
-test:
-	echo $(COBJS) $(CDEPS) $(CXXOBJS) $(CXXDEPS)
+$(scriptinstalldir)/%: $(scriptdir)/%
+	@echo Installing $<
+	@mkdir -p "$(@D)"
+	cp $< $@
+
+install: $(INSTALLTARGET) $(CONFINSTALLTARGETS) $(SCRIPTNSTALLTARGETS)
+
+uninstall:
+	rm -f $(INSTALLTARGET)
+	rm -f $(CONFINSTALLTARGETS)
+	rmdir --ignore-fail-on-non-empty $(confinstalldir)
+	rm -f $(SCRIPTNSTALLTARGETS)
 
 .PHONY: all clean install uninstall
 .SECONDARY:
 .SUFFIXES:
-#.SECONDARY: $(COBJS) $(CXXOBJS)
 -include $(CDEPS) $(CXXDEPS)
  

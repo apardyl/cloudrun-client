@@ -4,7 +4,7 @@
 #define DATA_CHUNK_SIZE (2*1024*1024)
 
 #define DEBUG 0
-#define VERBOSE 1
+#define VERBOSE 0
 extern bool verbose;
 
 #include <cstdio>

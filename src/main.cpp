@@ -22,7 +22,7 @@ int main(int argc, char **argv) {
         return 1;
     }
     printf("Usage:\n");
-    printf("Run server: cloudrun-client serve <IP>:<PORT>\n");
-    printf("Scan filesystem: cloudrun-client scan <save file name> <list of  directories to scan>\n");
+    printf("Run server: cloudrun-client-daemon serve <IP>:<PORT>\n");
+    printf("Scan filesystem: cloudrun-client-daemon scan <save file name> <list of  directories to scan>\n");
     return 1;
 }
