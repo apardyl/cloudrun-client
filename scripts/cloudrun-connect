@@ -6,19 +6,31 @@ source /etc/cloudrun/client.conf
 set -e
 
 function background () {
+    function cleanup () {
+        kill "$DPID"
+        rm -f "$PID_FILE"
+        rm -f "$CONTROL_FIFO"
+        echo "Session closed" >> "$LOG_FILE"
+        exit
+    }
+
+    trap cleanup SIGTERM SIGINT SIGHUP EXIT
+
     source /etc/cloudrun/client.conf
-    set -e
+
     echo "$$" > "$PID_FILE"
 
-    echo "Starting daemon" >> "$LOG_FILE"
-    cloudrun-client-daemon serve 0.0.0.0:30000 >> "$LOG_FILE" 2>&1 &
+    DPORT="$(($(id -u) + 30000))"
+
+    echo "Starting daemon on port $DPORT" >> "$LOG_FILE"
+    cloudrun-client-daemon serve 0.0.0.0:"$DPORT" >> "$LOG_FILE" 2>&1 &
+    export DPID="$!"
 
     echo "Connecting..." >> "$LOG_FILE"
 
-    cat "$CONTROL_FIFO" | ssh root@"$1" -R 30000:127.0.0.1:30000 -x cloudrun-worker >> "$LOG_FILE" 2>&1
-    echo "Session closed" >> "$LOG_FILE"
-    rm -f "$PID_FILE"
-    rm -f "$CONTROL_FIFO"
+    cat "$CONTROL_FIFO" | ssh root@"$1" -R 30000:127.0.0.1:"$DPORT" -x cloudrun-worker >> "$LOG_FILE" 2>&1
+
+    exit
 }
 
 export -f background
@@ -54,8 +66,24 @@ echo "Starting session"
 
 nohup bash -c "background $1" </dev/null >/dev/null 2>&1 &
 
+function kill_background () {
+    if [ -f "$PID_FILE" -a -e /proc/"$(< ${PID_FILE})" ]; then
+        echo q > "$CONTROL_FIFO"
+        inotifywait -qq -t 2 -e delete_self "$PID_FILE" || kill "$(< ${PID_FILE})"
+        exit 0
+    fi
+    exit 1
+}
+
+trap kill_background SIGTERM SIGINT SIGHUP
+
 tail -f "$LOG_FILE" | while read LINE; do
-    if grep "\(ERROR:\|Worker started\)" <<< "$LINE"; then
-        exit
-     fi
+    echo "$LINE"
+    if grep "\(ERROR:\|command not found\)" > /dev/null <<< "$LINE"; then
+        kill_background
+        exit 1
+    fi
+    if grep "Worker started" > /dev/null <<< "$LINE"; then
+        exit 0
+    fi
 done
