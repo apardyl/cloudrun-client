@@ -1,6 +1,9 @@
 # cloudrun-client
 A client for cloudrun
 
+**WARNING: this project is under development,, there are many issues to be
+addressed (including major security vulnerabilities), DO NOT USE IN PRODUCTION ENVIRONMENT**
+
 ## Requirements
 * protobuf (protoc and protobuf-cpp) >= 3.0
 * grpc >=1.13.0
