@@ -1,0 +1,17 @@
+#!/bin/bash
+
+source /etc/cloudrun/client.conf
+
+if [ ! -f "$PID_FILE" ]; then
+    echo "No active session, run cloudrun-connect first"
+    exit 1
+fi
+
+if [ ! -e /proc/"$(< ${PID_FILE})" ]; then
+    # Handle invalid session?
+    echo "No active session, run cloudrun-connect first"
+    exit 1
+fi
+
+# Ignore host keys - we are connecting over a secure channel
+exec ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=QUIET -p "$SSH_PORT" 127.0.0.1 "$@"

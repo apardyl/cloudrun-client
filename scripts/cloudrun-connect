@@ -28,7 +28,7 @@ function background () {
 
     echo "Connecting..." >> "$LOG_FILE"
 
-    cat "$CONTROL_FIFO" | ssh root@"$1" -R 30000:127.0.0.1:"$DPORT" -x cloudrun-worker >> "$LOG_FILE" 2>&1
+    cat "$CONTROL_FIFO" | ssh root@"$1" -R 30000:127.0.0.1:"$DPORT" -L "$SSH_PORT":172.30.30.2:22 -x -o ServerAliveInterval=60 cloudrun-worker >> "$LOG_FILE" 2>&1
 
     exit
 }
