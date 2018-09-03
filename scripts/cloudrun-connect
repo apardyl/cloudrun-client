@@ -56,18 +56,20 @@ rm -f "$HOME"/.cloudrun-authorized-keys
 cat "$HOME"/.ssh/*.pub >> "$HOME"/.cloudrun-authorized-keys
 
 if [ ! -f "$FS_META_FILE" ]; then
+    echo "Scanning filesystem (might take up to several minutes)"
     cloudrun-scan
 fi
 
 echo "Syncing metadata"
 
 # Upload meta file
-rsync -auz  "$FS_META_FILE" root@"$1":/root/filesystem.meta
+rsync -az  "$FS_META_FILE" root@"$1":/root/filesystem.meta
 
 mkfifo "$CONTROL_FIFO"
 echo "Starting session" > "$LOG_FILE"
 echo "Starting session"
 
+trap kill_background SIGTERM SIGINT SIGHUP
 nohup bash -c "background $1" </dev/null >/dev/null 2>&1 &
 
 function kill_background () {
@@ -78,8 +80,6 @@ function kill_background () {
     fi
     exit 1
 }
-
-trap kill_background SIGTERM SIGINT SIGHUP
 
 tail -f "$LOG_FILE" | while read LINE; do
     echo "$LINE"

@@ -17,8 +17,9 @@ int sha256_file(const std::string& path, std::string* checksum) {
     SHA256_CTX sha256_ctx{};
     SHA256_Init(&sha256_ctx);
     unsigned char buffer[buffsize];
-    while (fread(buffer, 1, buffsize, file)) {
-        SHA256_Update(&sha256_ctx, buffer, buffsize);
+    size_t bytesread = 0;
+    while ((bytesread = fread(buffer, 1, buffsize, file))) {
+        SHA256_Update(&sha256_ctx, buffer, bytesread);
     }
     fclose(file);
     unsigned char hash[SHA256_DIGEST_LENGTH];
