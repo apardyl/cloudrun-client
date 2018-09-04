@@ -92,7 +92,7 @@ static Node *find_or_create_base(Node *root, const std::string &base_path) {
             if (res != -1) {
                 close(res);
                 std::string dir = base_path.substr(pos + 1, next - pos - 1);
-                Node *u = &(*root->mutable_childern())[dir];
+                Node *u = &(*root->mutable_children())[dir];
                 set_stat_and_check_if_modified(u, path);
                 if (S_ISLNK(u->stat().mode())) {
                     u->set_target(read_link(path));
@@ -133,7 +133,7 @@ static void scan_dfs(Node *v, const std::string &path) {
 
     if (S_ISDIR(v->stat().mode())) {
         // remove not existing children.
-        auto &m = *v->mutable_childern();
+        auto &m = *v->mutable_children();
         for (auto it = m.begin(); it != m.end();) {
             std::string p = path + '/' + it->first;
             struct stat st{};
@@ -163,7 +163,7 @@ static void scan_dfs(Node *v, const std::string &path) {
                 if (res != -1 && ISSUPPORTED(st.st_mode)) {
                     std::string q(d->d_name);
                     debug_print("Creating/updating entry of %s - %s\n", path.c_str(), q.c_str());
-                    scan_dfs(&(*v->mutable_childern())[q], p);
+                    scan_dfs(&(*v->mutable_children())[q], p);
                 }
             }
         }
