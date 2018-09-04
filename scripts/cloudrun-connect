@@ -5,11 +5,14 @@ source /etc/cloudrun/client.conf
 # TODO: handle errors
 set -e
 
+umask 077
+
 function background () {
     function cleanup () {
         kill "$DPID"
         rm -f "$PID_FILE"
         rm -f "$CONTROL_FIFO"
+        rm -f "$DAEMON_SOCKET"
         echo "Session closed" >> "$LOG_FILE"
         exit
     }
@@ -20,15 +23,13 @@ function background () {
 
     echo "$$" > "$PID_FILE"
 
-    DPORT="$(($(id -u) + 30000))"
-
-    echo "Starting daemon on port $DPORT" >> "$LOG_FILE"
-    cloudrun-client-daemon serve 0.0.0.0:"$DPORT" >> "$LOG_FILE" 2>&1 &
+    echo "Starting daemon on $DAEMON_SOCKET" >> "$LOG_FILE"
+    cloudrun-client-daemon serve unix://"$DAEMON_SOCKET" >> "$LOG_FILE" 2>&1 &
     export DPID="$!"
 
     echo "Connecting..." >> "$LOG_FILE"
 
-    cat "$CONTROL_FIFO" | ssh root@"$1" -R 30000:127.0.0.1:"$DPORT" -L "$SSH_PORT":172.30.30.2:22022 -x -o ServerAliveInterval=60 cloudrun-worker >> "$LOG_FILE" 2>&1
+    cat "$CONTROL_FIFO" | ssh root@"$1" -R 30000:"$DAEMON_SOCKET" -L "$SSH_PORT":172.30.30.2:22022 -x -o ServerAliveInterval=60 cloudrun-worker >> "$LOG_FILE" 2>&1
 
     exit
 }
@@ -50,6 +51,7 @@ fi
 rm -f "$PID_FILE"
 rm -f "$CONTROL_FIFO"
 rm -f "$LOG_FILE"
+rm -f "$DAEMON_SOCKET"
 
 echo "Copying ssh public key"
 rm -f "$HOME"/.cloudrun-authorized-keys
